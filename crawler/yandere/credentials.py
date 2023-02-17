@@ -1,0 +1,5 @@
+yandere_database = "yandere"
+pg_user = "hcrawler"
+pg_password = "hcrawler"
+pg_host = "127.0.0.1"
+pg_port = "5432"
