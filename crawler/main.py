@@ -10,6 +10,11 @@ def crawler():
 @crawler.command()
 def yandere():
     connect_ydb()
+    already_exists = check_ydb()
+    if not already_exists:
+        print("\nFirst Time Execution")
+        print("Creating Tables...")
+        init_ytb()
     yandere_crawler()
 
 
