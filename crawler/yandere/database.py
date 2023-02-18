@@ -2,6 +2,7 @@ import emoji
 import psycopg2
 from .sql.scripts import *
 from .credentials import *
+from prettytable import PrettyTable
 
 
 class YandereDB:
@@ -66,5 +67,30 @@ class YandereDB:
             cur.execute(sql)
             conn.commit()
             print(emoji.emojize("Table " + tb_name + " created successfully :thumbs_up:"))
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def list_tags(self, name, limit, _type, all, order):
+        try:
+            cur = self.cur
+            sql = "SELECT id, name, count, type, note FROM tags"
+            if name is not None and _type is not None:
+                sql += f""" WHERE name LIKE '%{name}%' AND type = {_type}"""
+            elif name is not None:
+                sql += f""" WHERE name LIKE '%{name}%'"""
+            elif _type is not None:
+                sql += f""" WHERE type = {_type}"""
+            sql += f""" ORDER BY {order}"""
+            if not all:
+                sql += f""" LIMIT {limit}"""
+            cur.execute(sql)
+            results = cur.fetchall()
+            if len(results) == 0:
+                print("No results...")
+            else:
+                tb_header = ['id', 'name', 'count', 'type', 'notes']
+                table = PrettyTable(tb_header)
+                table.add_rows(results)
+                print(table)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
