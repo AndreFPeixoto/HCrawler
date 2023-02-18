@@ -19,6 +19,7 @@ class YandereDB:
                 host=pg_host,
                 port=pg_port
             )
+            conn.autocommit = True
             cur = conn.cursor()
             self.conn = conn
             self.cur = cur
@@ -92,5 +93,20 @@ class YandereDB:
                 table = PrettyTable(tb_header)
                 table.add_rows(results)
                 print(table)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def remove_tag(self, id):
+        try:
+            cur = self.cur
+            get_sql = f"""SELECT id FROM tags WHERE id = {id}"""
+            cur.execute(get_sql)
+            tag = cur.fetchone()
+            if tag is not None:
+                del_sql = f"DELETE FROM tags WHERE id = {id}"
+                cur.execute(del_sql)
+                print(f"Tag {id} deleted successfully")
+            else:
+                print(f"Tag with ID {id} does not exists")
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)

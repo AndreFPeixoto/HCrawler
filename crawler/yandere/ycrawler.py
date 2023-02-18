@@ -27,6 +27,11 @@ def yandere_crawler():
     pass
 
 
+#########################################################################################################
+#                                               TAGS                                                    #
+#########################################################################################################
+
+
 @yandere_crawler.command()
 @click.option('-a', '--all', is_flag=True, default=False)
 @click.option('-n', '--name')
@@ -73,3 +78,12 @@ Invalid Order "{order}". Choose one of the following:
     elif order == "count":
         order = "count DESC"
     ydb.list_tags(name, limit, t, all, order)
+
+
+@yandere_crawler.command()
+@click.argument('id', required=True)
+def remove_tag(id):
+    if not id.isnumeric():
+        print("Invalid ID")
+        return
+    ydb.remove_tag(id)
