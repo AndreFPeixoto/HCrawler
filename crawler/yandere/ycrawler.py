@@ -33,20 +33,22 @@ def yandere_crawler():
 
 
 @yandere_crawler.command()
-@click.option('-a', '--all', is_flag=True, default=False)
-@click.option('-n', '--name')
-@click.option('-t', '--type', "_type")
-@click.option('-l', '--limit', default=20)
-@click.option('-o', '--order', default="name")
+@click.option('-a', '--all', is_flag=True, default=False, help="Return all tags registered in database")
+@click.option('-n', '--name', help="List the tags that match the name entered")
+@click.option('-t', '--type', "_type", help="List the tags that match a specific type. List of types:\n0 - general\n1 "
+                                            "- artist\n3 - copyright\n4 - character\n5 - circle\n6 - faults")
+@click.option('-l', '--limit', default=20, help="Number of results to display. Default is 20")
+@click.option('-o', '--order', default="name", help="Order of the results. Order by id, name, count and type. Default "
+                                                    "is name")
 def list_tags(name, limit, _type, all, order):
     t = None
     if _type is not None:
         if _type.isnumeric():
             it = int(_type)
-            if it < 0 or it > 5:
+            if it == 2 or it < 0 or it > 6:
                 print(f"""
 Invalid Type "{_type}". Choose one of the following:
-[general(0)|artist(1)|copyright(3)|character(4)|circle(5)]
+[general(0)|artist(1)|copyright(3)|character(4)|circle(5)|faults(6)]
                 """)
                 return
             else:
@@ -63,10 +65,12 @@ Invalid Type "{_type}". Choose one of the following:
                     t = Types.CIRCLE
                 case "character":
                     t = Types.CHARACTER
+                case "faults":
+                    t = Types.FAULTS
                 case default:
                     print(f"""
 Invalid Type "{_type}". Choose one of the following:
-[general(0)|artist(1)|copyright(3)|character(4)|circle(5)]
+[general(0)|artist(1)|copyright(3)|character(4)|circle(5)|faults(6)]
                     """)
                     return
     if order != 'name' and order != "id" and order != "count" and order != "type":
@@ -77,7 +81,18 @@ Invalid Order "{order}". Choose one of the following:
         return
     elif order == "count":
         order = "count DESC"
+    if limit < 0:
+        limit = 0
     ydb.list_tags(name, limit, t, all, order)
+
+
+@yandere_crawler.command()
+@click.option('--tag', prompt="Tag", required=True, help="Name of the tag to search on yandere")
+@click.option('-l', '--limit', default=10, help="Number of results to display. Default is 10. Max is 20")
+def search_tag(tag, limit):
+    if limit <= 0 or limit > 20:
+        limit = 20
+    ydb.search_tag(tag, limit)
 
 
 @yandere_crawler.command()

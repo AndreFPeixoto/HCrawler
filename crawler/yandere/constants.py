@@ -4,3 +4,4 @@ class Types:
     COPYRIGHT = 3
     CHARACTER = 4
     CIRCLE = 5
+    FAULTS = 6
