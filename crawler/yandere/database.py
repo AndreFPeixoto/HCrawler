@@ -46,7 +46,7 @@ class YandereDB:
             self.conn.close()
 
     def check_db(self) -> bool:
-        return self.check_table("tags")
+        return self.check_table("tags") and self.check_table("jobs")
 
     def check_table(self, tb_name) -> bool:
         exists = False
@@ -63,6 +63,7 @@ class YandereDB:
 
     def initialize_db(self):
         self.create_table("tags", create_tb_tags)
+        self.create_table("jobs", create_tb_jobs)
 
     def create_table(self, tb_name, sql):
         try:
