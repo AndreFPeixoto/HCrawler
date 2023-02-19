@@ -1,9 +1,11 @@
+import math
 import emoji
 import psycopg2
 from .utils import *
 from .sql.scripts import *
 from .credentials import *
 from .models.Tag import Tag
+from .models.Job import Job
 from prettytable import PrettyTable
 from .yservice import YandereService
 
@@ -75,7 +77,11 @@ class YandereDB:
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
-    def list_tags(self, name, limit, _type, all, order):
+    #########################################################################################################
+    #                                               TAGS                                                    #
+    #########################################################################################################
+
+    def list_tags(self, name, limit, _type, _all, order):
         try:
             cur = self.cur
             sql = "SELECT id, name, count, type, note FROM tags"
@@ -86,7 +92,7 @@ class YandereDB:
             elif _type is not None:
                 sql += f""" WHERE type = {_type}"""
             sql += f""" ORDER BY {order}"""
-            if not all:
+            if not _all:
                 sql += f""" LIMIT {limit}"""
             cur.execute(sql)
             results = cur.fetchall()
@@ -185,17 +191,71 @@ class YandereDB:
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
-    def remove_tag(self, id):
+    def remove_tag(self, _id):
         try:
             cur = self.cur
-            get_sql = f"""SELECT id FROM tags WHERE id = {id}"""
+            get_sql = f"""SELECT id FROM tags WHERE id = {_id}"""
             cur.execute(get_sql)
             tag = cur.fetchone()
             if tag is not None:
-                del_sql = f"DELETE FROM tags WHERE id = {id}"
+                del_sql = f"DELETE FROM tags WHERE id = {_id}"
                 cur.execute(del_sql)
-                print(f"Tag {id} deleted successfully")
+                print(f"Tag {_id} deleted successfully")
             else:
-                print(f"Tag with ID {id} does not exists")
+                print(f"Tag with ID {_id} does not exists")
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    #########################################################################################################
+    #                                               JOBS                                                    #
+    #########################################################################################################
+
+    def insert_job(self, job: Job):
+        try:
+            cur = self.cur
+            sql = f"""
+            INSERT INTO jobs(
+            tag, download_path, total_pages, total_posts, last_page_downloaded, last_post_downloaded, last_run, created_at, updated_at)
+            VALUES ('{job.tag}', '{job.download_path}', {job.total_pages}, {job.total_posts}, {job.last_page_downloaded}, {job.last_post_downloaded}, '{job.last_run}', '{job.created_at}', '{job.updated_at}');
+            """
+            cur.execute(sql)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def find_job_by_tag(self, tag):
+        try:
+            cur = self.cur
+            sql = f"SELECT * FROM jobs WHERE tag = '{tag}'"
+            cur.execute(sql)
+            result = cur.fetchone()
+            if result is None:
+                return None
+            else:
+                job = Job(result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8],
+                          result[9])
+                job.id = result[0]
+                return job
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def create_job(self, tag, path):
+        try:
+            job_from_db = self.find_job_by_tag(tag)
+            if job_from_db is not None:
+                print("Already exists a job with the same tag")
+                return
+            else:
+                post_attrib = YandereService.get_posts_count_offset(tag)
+                posts_count = int(post_attrib['count'])
+                if posts_count == 0:
+                    print("Tag does not exists or does not have posts")
+                    return
+                else:
+                    setup_folder(path)
+                    page_count = math.ceil(posts_count / 40)
+                    job_to_create = Job(tag, path, page_count, posts_count, None, None, None,
+                                        get_current_datetime_str(),
+                                        None)
+                    self.insert_job(job_to_create)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)

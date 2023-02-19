@@ -103,6 +103,14 @@ def remove_tag(id):
         return
     ydb.remove_tag(id)
 
+
 #########################################################################################################
 #                                               JOBS                                                    #
 #########################################################################################################
+
+@yandere_crawler.command()
+@click.option('--tag', prompt="Tag", required=True, help="Name of the tag you want to download on yandere")
+@click.option('--path', prompt="Download Path", required=True, help="Path where you want to store the pictures from "
+                                                                   "yandere")
+def create_job(tag, path):
+    ydb.create_job(tag, path)
