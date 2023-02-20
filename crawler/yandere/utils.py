@@ -14,6 +14,3 @@ def setup_folder(_dir):
         os.makedirs(_dir)
     return os.path.abspath(_dir)
 
-
-def check_if_file_exists(file) -> bool:
-    return os.path.isfile(file)

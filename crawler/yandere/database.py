@@ -259,3 +259,24 @@ class YandereDB:
                     self.insert_job(job_to_create)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
+
+    def list_jobs(self, tag):
+        try:
+            cur = self.cur
+            sql = "SELECT id, tag, last_run, total_pages, total_posts, last_page_downloaded, last_post_downloaded " \
+                  "FROM jobs"
+            if tag is not None:
+                sql += f""" WHERE name LIKE '%{tag}%'"""
+            sql += f""" ORDER BY id"""
+            cur.execute(sql)
+            results = cur.fetchall()
+            if len(results) == 0:
+                print("Job not find...")
+            else:
+                tb_header = ['id', 'tag', 'last run', 'pages', 'posts', 'last page downloaded',
+                             'last post downloaded']
+                table = PrettyTable(tb_header)
+                table.add_rows(results)
+                print(table)
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
