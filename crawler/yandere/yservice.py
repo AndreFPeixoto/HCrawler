@@ -1,6 +1,7 @@
 import requests
 from pykson import Pykson
 from .models.Tag import Tag
+from .models.Post import Post
 import xml.etree.ElementTree as ET
 
 
@@ -24,3 +25,18 @@ class YandereService:
         response = requests.request("GET", url, headers=headers, data=payload)
         root = ET.fromstring(response.text)
         return root.attrib
+
+    @staticmethod
+    def get_posts_with_tag_by_page(tag, page):
+        url = f"https://yande.re/post.xml?limit=40&page={page}&tags={tag}"
+        payload = {}
+        headers = {}
+        response = requests.request("GET", url, headers=headers, data=payload)
+        root = ET.fromstring(response.text)
+        offset = int(root.attrib['offset'])
+        posts = []
+        for child in root:
+            post_attributes = child.attrib
+            post = Pykson().from_json(post_attributes, Post, accept_unknown=True)
+            posts.append(post)
+        return posts

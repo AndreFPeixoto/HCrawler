@@ -1,11 +1,14 @@
 import math
 import emoji
+import urllib
 import psycopg2
+import itertools
 from .utils import *
 from .sql.scripts import *
 from .credentials import *
 from .models.Tag import Tag
 from .models.Job import Job
+from .models.Post import Post
 from prettytable import PrettyTable
 from .yservice import YandereService
 
@@ -319,7 +322,28 @@ Job ID: {job.id}\n
             print(error)
 
     def run_job(self, job_id):
-        pass
+        job_from_db = self.find_job_by_id(job_id)
+        if job_from_db is not None:
+            jog_attributes = YandereService.get_posts_count_offset(job_from_db.tag)
+            job_posts_total = int(jog_attributes['count'])
+            job_pages_total = math.ceil(job_posts_total / 40)
+            if job_from_db.total_pages != job_pages_total or job_from_db.total_posts != job_posts_total:
+                print(
+                    f"Update Job Record because {job_from_db.total_pages}!={job_pages_total} or {job_from_db.total_posts}!={job_posts_total}")
+                job_from_db.total_pages = job_pages_total
+                job_from_db.total_posts = job_posts_total
+            current_page = job_pages_total
+            job_tag = job_from_db.tag
+            downloaded_posts = self.get_downloaded_posts_from_db(job_tag)
+            posts_fetched = YandereService.get_posts_with_tag_by_page(job_tag, current_page)
+            posts_fetched.reverse()
+            number_of_posts_fetched = len(posts_fetched)
+            for post in posts_fetched:
+                if int(post.id) not in downloaded_posts:
+                    print(f"Downloading post {post.id}")
+                    self.download_post(post, job_from_db.download_path)
+        else:
+            print(f"Job with ID {job_id} does not exists")
 
     def remove_job(self, _id):
         try:
@@ -339,3 +363,24 @@ Job ID: {job.id}\n
     #########################################################################################################
     #                                               POSTS                                                   #
     #########################################################################################################
+
+    def get_downloaded_posts_from_db(self, tag):
+        try:
+            cur = self.cur
+            sql = f"""
+            SELECT id FROM posts
+            WHERE tags LIKE '{tag} %' OR tags LIKE '% {tag} %' OR tags LIKE '% {tag}' OR tags LIKE '{tag}' AND downloaded = true
+            ORDER BY id ASC
+            """
+            cur.execute(sql)
+            results = cur.fetchall()
+            post_ids = list(itertools.chain(*results))
+            return post_ids
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def download_post(self, post: Post, path):
+        img_url = post.file_url
+        img_name = f"yande.re {post.id}.{post.file_ext}"
+        store = f"{path}\{img_name}"
+        urllib.request.urlretrieve(img_url, store)
