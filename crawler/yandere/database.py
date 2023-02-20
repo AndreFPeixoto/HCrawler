@@ -215,8 +215,8 @@ class YandereDB:
             cur = self.cur
             sql = f"""
             INSERT INTO jobs(
-            tag, download_path, total_pages, total_posts, last_page_downloaded, last_post_downloaded, last_run, created_at, updated_at)
-            VALUES ('{job.tag}', '{job.download_path}', {job.total_pages}, {job.total_posts}, {job.last_page_downloaded}, {job.last_post_downloaded}, '{job.last_run}', '{job.created_at}', '{job.updated_at}');
+            tag, download_path, total_pages, total_posts, last_run, created_at, updated_at)
+            VALUES ('{job.tag}', '{job.download_path}', {job.total_pages}, {job.total_posts}, '{job.last_run}', '{job.created_at}', '{job.updated_at}');
             """
             cur.execute(sql)
         except (Exception, psycopg2.DatabaseError) as error:
@@ -251,9 +251,9 @@ class YandereDB:
                     print("Tag does not exists or does not have posts")
                     return
                 else:
-                    setup_folder(path)
+                    abs_path = setup_folder(path)
                     page_count = math.ceil(posts_count / 40)
-                    job_to_create = Job(tag, path, page_count, posts_count, None, None, None,
+                    job_to_create = Job(tag, abs_path, page_count, posts_count, None, None, None,
                                         get_current_datetime_str(),
                                         None)
                     self.insert_job(job_to_create)

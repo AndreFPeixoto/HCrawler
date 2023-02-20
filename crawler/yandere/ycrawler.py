@@ -110,7 +110,10 @@ def remove_tag(id):
 
 @yandere_crawler.command()
 @click.option('--tag', prompt="Tag", required=True, help="Name of the tag you want to download on yandere")
-@click.option('--path', prompt="Download Path", required=True, help="Path where you want to store the pictures from "
-                                                                   "yandere")
+@click.option('--path', prompt=f"Download Path", required=False, default=f"{DEFAULT_DOWNLOAD_FOLDER_PATH}",
+              help="Path where you want to store the pictures from "
+                   "yandere")
 def create_job(tag, path):
+    tag = tag.lower()
+    path = f"{path}\{tag}"
     ydb.create_job(tag, path)

@@ -24,7 +24,8 @@ def display_header():
 
 def main():
     display_header()
-    crawler()
+    # crawler()
+    yandere()
 
 
 if __name__ == "__main__":
