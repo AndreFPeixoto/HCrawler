@@ -48,7 +48,7 @@ class YandereDB:
             self.conn.close()
 
     def check_db(self) -> bool:
-        return self.check_table("tags") and self.check_table("jobs")
+        return self.check_table("tags") and self.check_table("jobs") and self.check_table("posts")
 
     def check_table(self, tb_name) -> bool:
         exists = False
@@ -66,6 +66,7 @@ class YandereDB:
     def initialize_db(self):
         self.create_table("tags", create_tb_tags)
         self.create_table("jobs", create_tb_jobs)
+        self.create_table("posts", create_tb_posts)
 
     def create_table(self, tb_name, sql):
         try:
@@ -238,6 +239,22 @@ class YandereDB:
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
+    def find_job_by_id(self, _id):
+        try:
+            cur = self.cur
+            sql = f"SELECT * FROM jobs WHERE id = '{_id}'"
+            cur.execute(sql)
+            result = cur.fetchone()
+            if result is None:
+                return None
+            else:
+                job = Job(result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8],
+                          result[9])
+                job.id = result[0]
+                return job
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
     def create_job(self, tag, path):
         try:
             job_from_db = self.find_job_by_tag(tag)
@@ -281,6 +298,29 @@ class YandereDB:
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
+    def display_job_details(self, _id):
+        try:
+            job = self.find_job_by_id(_id)
+            if job is not None:
+                print(f"""
+Job ID: {job.id}\n
+ - Tag: {job.tag}
+ - Download Folder: {job.download_path}
+ - Last Run: {job.last_run or "Never"}
+ - Pages: {job.total_pages}
+ - Posts: {job.total_posts}
+ - Last Page Downloaded: {job.last_page_downloaded}
+ - Last Post Downloaded: {job.last_post_downloaded}
+ - Date of Creation: {job.created_at}
+                """)
+            else:
+                print(f"Job with ID {_id} does not exists")
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    def run_job(self, job_id):
+        pass
+
     def remove_job(self, _id):
         try:
             cur = self.cur
@@ -295,3 +335,7 @@ class YandereDB:
                 print(f"Job with ID {_id} does not exists")
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
+
+    #########################################################################################################
+    #                                               POSTS                                                   #
+    #########################################################################################################

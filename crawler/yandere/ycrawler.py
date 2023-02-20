@@ -130,6 +130,25 @@ def list_jobs(tag):
 
 @yandere_crawler.command()
 @click.argument('id', required=True)
+@click.option('-p', '--page', help="Show the posts of the given page")
+def job_details(id, page):
+    if not id.isnumeric():
+        print("Invalid ID")
+        return
+    ydb.display_job_details(id)
+
+
+@yandere_crawler.command()
+@click.argument('id', required=True)
+def run_job(id):
+    if not id.isnumeric():
+        print("Invalid ID")
+        return
+    ydb.run_job(id)
+
+
+@yandere_crawler.command()
+@click.argument('id', required=True)
 def remove_job(id):
     if not id.isnumeric():
         print("Invalid ID")
