@@ -280,3 +280,18 @@ class YandereDB:
                 print(table)
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
+
+    def remove_job(self, _id):
+        try:
+            cur = self.cur
+            get_sql = f"""SELECT id FROM jobs WHERE id = {_id}"""
+            cur.execute(get_sql)
+            job = cur.fetchone()
+            if job is not None:
+                del_sql = f"DELETE FROM jobs WHERE id = {_id}"
+                cur.execute(del_sql)
+                print(f"Job {_id} deleted successfully")
+            else:
+                print(f"Job with ID {_id} does not exists")
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)

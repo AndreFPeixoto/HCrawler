@@ -126,3 +126,12 @@ def list_jobs(tag):
     if tag is not None:
         tag = tag.lower()
     ydb.list_jobs(tag)
+
+
+@yandere_crawler.command()
+@click.argument('id', required=True)
+def remove_job(id):
+    if not id.isnumeric():
+        print("Invalid ID")
+        return
+    ydb.remove_job(id)
