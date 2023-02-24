@@ -347,33 +347,6 @@ Job ID: {job.id}\n
                 t = Thread(target=self.download_post, args=(works, job_from_db.download_path,))
                 t.start()
             works.join()
-            """
-            number_of_posts_fetched = len(posts_fetched)
-            while number_of_posts_fetched > 0:
-                threads = []
-                count = 10
-                if number_of_posts_fetched < 10:
-                    count = number_of_posts_fetched
-                for i in range(count):
-                    post = posts_fetched[i]
-                    del posts_fetched[i]
-                    if int(post.id) not in downloaded_posts:
-                        print(f"Starting thread {i}")
-                        t = Thread(target=self.download_post, args=(post, job_from_db.download_path,))
-                        threads.append(t)
-                        t.start()
-                number_of_posts_fetched = len(posts_fetched)
-            """
-            """
-            threads = []
-            for post in posts_fetched:
-                if int(post.id) not in downloaded_posts:
-                    t = Thread(target=self.download_post, args=(post, job_from_db.download_path,))
-                    threads.append(t)
-                    t.start()
-            for t in threads:
-                t.join()
-            """
 
         else:
             print(f"Job with ID {job_id} does not exists")
@@ -413,13 +386,6 @@ Job ID: {job.id}\n
             print(error)
 
     def download_post(self, queue: Queue, path):
-        """
-        print(f"Downloading post {post.id}")
-        img_url = post.file_url
-        img_name = f"yande.re {post.id}.{post.file_ext}"
-        store = f"{path}\{img_name}"
-        urllib.request.urlretrieve(img_url, store)
-        """
         while not queue.empty():
             post = queue.get()
             print(f"Downloading post {post.id}")
