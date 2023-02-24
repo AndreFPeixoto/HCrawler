@@ -4,10 +4,12 @@ import urllib
 import psycopg2
 import itertools
 from .utils import *
+from queue import Queue
 from .sql.scripts import *
 from .credentials import *
 from .models.Tag import Tag
 from .models.Job import Job
+from threading import Thread
 from .models.Post import Post
 from prettytable import PrettyTable
 from .yservice import YandereService
@@ -337,11 +339,42 @@ Job ID: {job.id}\n
             downloaded_posts = self.get_downloaded_posts_from_db(job_tag)
             posts_fetched = YandereService.get_posts_with_tag_by_page(job_tag, current_page)
             posts_fetched.reverse()
-            number_of_posts_fetched = len(posts_fetched)
+            works = Queue()
             for post in posts_fetched:
                 if int(post.id) not in downloaded_posts:
-                    print(f"Downloading post {post.id}")
-                    self.download_post(post, job_from_db.download_path)
+                    works.put(post)
+            for i in range(10):
+                t = Thread(target=self.download_post, args=(works, job_from_db.download_path,))
+                t.start()
+            works.join()
+            """
+            number_of_posts_fetched = len(posts_fetched)
+            while number_of_posts_fetched > 0:
+                threads = []
+                count = 10
+                if number_of_posts_fetched < 10:
+                    count = number_of_posts_fetched
+                for i in range(count):
+                    post = posts_fetched[i]
+                    del posts_fetched[i]
+                    if int(post.id) not in downloaded_posts:
+                        print(f"Starting thread {i}")
+                        t = Thread(target=self.download_post, args=(post, job_from_db.download_path,))
+                        threads.append(t)
+                        t.start()
+                number_of_posts_fetched = len(posts_fetched)
+            """
+            """
+            threads = []
+            for post in posts_fetched:
+                if int(post.id) not in downloaded_posts:
+                    t = Thread(target=self.download_post, args=(post, job_from_db.download_path,))
+                    threads.append(t)
+                    t.start()
+            for t in threads:
+                t.join()
+            """
+
         else:
             print(f"Job with ID {job_id} does not exists")
 
@@ -379,8 +412,19 @@ Job ID: {job.id}\n
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
 
-    def download_post(self, post: Post, path):
+    def download_post(self, queue: Queue, path):
+        """
+        print(f"Downloading post {post.id}")
         img_url = post.file_url
         img_name = f"yande.re {post.id}.{post.file_ext}"
         store = f"{path}\{img_name}"
         urllib.request.urlretrieve(img_url, store)
+        """
+        while not queue.empty():
+            post = queue.get()
+            print(f"Downloading post {post.id}")
+            img_url = post.file_url
+            img_name = f"yande.re {post.id}.{post.file_ext}"
+            store = f"{path}\{img_name}"
+            urllib.request.urlretrieve(img_url, store)
+            queue.task_done()
